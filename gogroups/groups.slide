@@ -1,0 +1,50 @@
+
+Go groups
+Managing groups of concurrent goroutines
+7 Apr 2019
+Tags: concurrency, waitgroup, errgroup
+
+Michal Bock
+Go developer, Utility Warehouse
+michal.bock@gmail.com
+http://michalbock.com
+
+* Why do we need to manage goroutines?
+.play -edit simple.go
+
+* Meet the Wait Group
+- part of the built in `sync` package
+- call `Add` for each goroutine we start
+- call `Done` after a single goroutine finishes (usually in a `defer` clause)
+
+.play -edit waitgroup.go
+
+* Wait Group Example - Fixed
+.play -edit waitgroup_correct.go
+
+* What about errors?
+- so far our job functions had signature like this
+.code jobs.go /^type ExampleJob/,/\)/
+- in real life where everything is not perfect the signature will be more like this
+.code jobs.go /^type RealJob/,/error/
+
+* Job that can fail
+.code errchan.go /^func Job/,/return nil\n}/
+
+* Use error channel
+.play errchan.go /^func main/,/}\n}/
+
+* Handling termination
+- the usual and recommended way to signal to processes that the program is terminating or that a result is no longer needed is by using a context
+.code withctx.go /^func NewCtx/,/return ctx\n}/
+
+* Job with context
+.code withctx.go /^func JobWithCtx/,/return nil\n}/
+
+* Use error channel and context
+.play withctx.go /^func main/,/}\n}/
+
+* Meet the Error Group
+- part of the experimental `golang.org/x/sync/errgroup` package
+- only returns the first error it encounters
+.play errgroup/errgroup.go /^func main/,/}\n}/
