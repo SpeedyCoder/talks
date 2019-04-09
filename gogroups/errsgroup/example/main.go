@@ -6,9 +6,10 @@ import (
 	"math/rand"
 	"os"
 	"os/signal"
-	"sync"
 	"syscall"
 	"time"
+
+	"github.com/SpeedyCoder/talks/gogroups/errsgroup"
 )
 
 func NewCtx() context.Context {
@@ -28,9 +29,9 @@ func JobWithCtx(ctx context.Context, j int) error {
 	case <-ctx.Done(): // HL
 		return nil
 	case <-time.After(time.Second * time.Duration(rand.Intn(3))):
-		// Simulate some processing
 	}
 	if rand.Intn(12) == j {
+		fmt.Printf("Job %v failed.\n", j)
 		return fmt.Errorf("job %v failed", j)
 	}
 
@@ -39,23 +40,16 @@ func JobWithCtx(ctx context.Context, j int) error {
 }
 
 func main() {
-	ctx := NewCtx()
-	errchan := make(chan error, 10) // HL
-	var wg sync.WaitGroup
+	eg, ctx := errsgroup.WithContext(NewCtx())
 
 	for i := 0; i < 10; i++ {
-		wg.Add(1)
-		go func(j int) {
-			defer wg.Done()
-			if err := JobWithCtx(ctx, j); err != nil {
-				errchan <- err // HL
-			}
-		}(i)
+		j := i
+		eg.Go(func() error {
+			return JobWithCtx(ctx, j)
+		})
 	}
 
-	wg.Wait()
-	close(errchan)
-	for err := range errchan {
+	for _, err := range eg.Wait() { // HL
 		fmt.Println("Encountered error:", err)
 	}
 }

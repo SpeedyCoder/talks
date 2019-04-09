@@ -12,15 +12,23 @@ http://michalbock.com
 * Why do we need to manage goroutines?
 .play -edit simple.go
 
+: We can just start them and they will do what they are supposed to do, right?
+
+
 * Meet the Wait Group
 - part of the built in `sync` package
-- call `Add` for each goroutine we start
-- call `Done` after a single goroutine finishes (usually in a `defer` clause)
+- call *Add* for each goroutine we start
+- call *Done* after a single goroutine finishes (usually in a `defer` clause)
+- then just *Wait* for everything to finish
+.play -edit waitgroup.go /^func main/,/\n}/
 
-.play -edit waitgroup.go
+: This is not correct as i is updated in place.
 
 * Wait Group Example - Fixed
-.play -edit waitgroup_correct.go
+- take a single integer argument in the function we are calling
+- the arguments to any function called with *go* are evaluated in the calling goroutine
+- the body is then evaluated in a new goroutine
+.play -edit waitgroup_correct.go /^func main/,/\n}/
 
 * What about errors?
 - so far our job functions had signature like this
@@ -31,11 +39,11 @@ http://michalbock.com
 * Job that can fail
 .code errchan.go /^func Job/,/return nil\n}/
 
-* Use error channel
+* Use error channel to collect errors
 .play errchan.go /^func main/,/}\n}/
 
 * Handling termination
-- the usual and recommended way to signal to processes that the program is terminating or that a result is no longer needed is by using a context
+- the usual and recommended way to signal to processes that a result is no longer needed or that the program is terminating is by using a context
 .code withctx.go /^func NewCtx/,/return ctx\n}/
 
 * Job with context
@@ -44,7 +52,31 @@ http://michalbock.com
 * Use error channel and context
 .play withctx.go /^func main/,/}\n}/
 
+: Show example with cancellation outside of the presentation.
+: This is a lot of slightly awkward code to write every time.
+
 * Meet the Error Group
 - part of the experimental `golang.org/x/sync/errgroup` package
 - only returns the first error it encounters
-.play errgroup/errgroup.go /^func main/,/}\n}/
+.play errgroup/main.go /^func main/,/}\n}/
+
+: Another way to deal with the initial problem of referencing a shared variable.
+
+* What if I want all the errors?
+- create a custom version of the error group that can be used like this
+.code errsgroup/example/main.go /^func main/,/}\n}/
+
+: Look at some code
+
+* Are there some ready made alternatives?
+- Some I found useful are available in `github.com/uw-labs/sync` package.
+
+*rungroup*
+
+- cancels the underlying context as soon as the first function started with a call to `Go` terminates
+- useful when managing a continuously running pipeline
+
+*gogroup*
+
+- behaves like `rungroup` but `Wait` only blocks until the underlying context is cancelled (this happens when first function terminates)
+- useful in bidirectional gRPC streaming
