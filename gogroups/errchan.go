@@ -6,12 +6,12 @@ import (
 	"sync"
 )
 
-func Job(j int) error {
-	if rand.Intn(12) == j {
-		return fmt.Errorf("job %v failed", j)
+func Job(jobID int) error {
+	if rand.Intn(12) == jobID {
+		return fmt.Errorf("job %v failed", jobID)
 	}
 
-	fmt.Printf("Job %v done.\n", j)
+	fmt.Printf("Job %v done.\n", jobID)
 	return nil
 }
 
@@ -21,9 +21,9 @@ func main() {
 
 	for i := 0; i < 10; i++ {
 		wg.Add(1)
-		go func(j int) {
+		go func(jobID int) {
 			defer wg.Done()
-			if err := Job(j); err != nil {
+			if err := Job(jobID); err != nil {
 				errchan <- err // HL
 			}
 		}(i)

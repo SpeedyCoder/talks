@@ -24,29 +24,29 @@ func NewCtx() context.Context {
 	return ctx
 }
 
-func JobWithCtx(ctx context.Context, j int) error {
+func JobWithCtx(ctx context.Context, jobID int) error {
 	select {
 	case <-ctx.Done(): // HL
-		fmt.Printf("context cancelled job %v terminting\n", j)
+		fmt.Printf("context cancelled job %v terminting\n", jobID)
 		return nil
 	case <-time.After(time.Second * time.Duration(rand.Intn(3))):
 	}
-	if rand.Intn(12) == j {
-		fmt.Printf("Job %v failed.\n", j)
-		return fmt.Errorf("job %v failed", j)
+	if rand.Intn(12) == jobID {
+		fmt.Printf("Job %v failed.\n", jobID)
+		return fmt.Errorf("job %v failed", jobID)
 	}
 
-	fmt.Printf("Job %v done.\n", j)
+	fmt.Printf("Job %v done.\n", jobID)
 	return nil
 }
 
 func main() {
-	eg, ctx := errgroup.WithContext(NewCtx())
+	eg, ctx := errgroup.WithContext(NewCtx()) // HL
 
 	for i := 0; i < 10; i++ {
-		j := i // HL
+		jobID := i // HL
 		eg.Go(func() error {
-			return JobWithCtx(ctx, j)
+			return JobWithCtx(ctx, jobID)
 		})
 	}
 

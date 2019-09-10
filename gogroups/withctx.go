@@ -23,33 +23,33 @@ func NewCtx() context.Context {
 	return ctx
 }
 
-func JobWithCtx(ctx context.Context, j int) error {
+func JobWithCtx(ctx context.Context, jobID int) error {
 	select {
 	case <-ctx.Done(): // HL
-		fmt.Printf("context cancelled job %v terminting\n", j)
+		fmt.Printf("context cancelled job %v terminting\n", jobID)
 		return nil
 	case <-time.After(time.Second * time.Duration(rand.Intn(3))):
 		// Simulate some processing
 	}
-	if rand.Intn(12) == j {
-		return fmt.Errorf("job %v failed", j)
+	if rand.Intn(12) == jobID {
+		return fmt.Errorf("job %v failed", jobID)
 	}
 
-	fmt.Printf("Job %v done.\n", j)
+	fmt.Printf("Job %v done.\n", jobID)
 	return nil
 }
 
 func main() {
-	ctx := NewCtx()
-	errchan := make(chan error, 10) // HL
+	ctx := NewCtx() // HL
+	errchan := make(chan error, 10)
 	var wg sync.WaitGroup
 
 	for i := 0; i < 10; i++ {
 		wg.Add(1)
-		go func(j int) {
+		go func(jobID int) {
 			defer wg.Done()
-			if err := JobWithCtx(ctx, j); err != nil {
-				errchan <- err // HL
+			if err := JobWithCtx(ctx, jobID); err != nil { // HL
+				errchan <- err
 			}
 		}(i)
 	}

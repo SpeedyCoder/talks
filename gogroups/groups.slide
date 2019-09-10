@@ -1,25 +1,28 @@
 
-Go groups
-Managing groups of concurrent goroutines
-7 Apr 2019
+Managing Groups of Goroutines
+18 Sep 2019
 Tags: concurrency, waitgroup, errgroup
 
 Michal Bock
 Go developer, Utility Warehouse
 michal.bock@gmail.com
-http://michalbock.com
 
-* Why do we need to manage goroutines?
+http://michalbock.com/goroutines
+
+https://careers.utilitywarehouse.co.uk
+
+* Let's Start Some Goroutines!
 .play -edit simple.go
 
 : We can just start them and they will do what they are supposed to do, right?
 
+* . . . . . . . . . . . . What Do I Do Now?
 
 * Meet the Wait Group
-- part of the built in `sync` package
-- call *Add* for each goroutine we start
-- call *Done* after a single goroutine finishes (usually in a `defer` clause)
-- then just *Wait* for everything to finish
+- part of the built in `sync` package - essentially just a thread safe counter
+- *Add* increases the value of the counter by specified amount
+- *Done* decreases the value of the counter by 1
+- *Wait* blocks until the value of the counter is 0
 .play -edit waitgroup.go /^func main/,/\n}/
 
 : This is not correct as i is updated in place.
@@ -30,46 +33,50 @@ http://michalbock.com
 - the body is then evaluated in a new goroutine
 .play -edit waitgroup_correct.go /^func main/,/\n}/
 
-* What about errors?
-- so far our job functions had signature like this
+* What about Errors?
+- so far our job functions had the following signature
 .code jobs.go /^type ExampleJob/,/\)/
-- in real life where everything is not perfect the signature will be more like this
+- in real life where things are not perfect the signature will more likely look like this
 .code jobs.go /^type RealJob/,/error/
 
-* Job that can fail
+* Job That Can Fail
 .code errchan.go /^func Job/,/return nil\n}/
 
-* Use error channel to collect errors
+* Use Error Channel to Collect Errors
 .play errchan.go /^func main/,/}\n}/
 
-* Handling termination
-- the usual and recommended way to signal to processes that a result is no longer needed or that the program is terminating is by using a context
+* Handling Termination
+- the standard way to signal to processes that a result is no longer needed or that the program is by cancelling a context provided to the function we are calling
 .code withctx.go /^func NewCtx/,/return ctx\n}/
 
-* Job with context
+* Job with Context
 .code withctx.go /^func JobWithCtx/,/return nil\n}/
 
-* Use error channel and context
+* Using Error Channel and Context
 .play withctx.go /^func main/,/}\n}/
 
 : Show example with cancellation outside of the presentation.
 : This is a lot of slightly awkward code to write every time.
 
+* Is There a Simpler Way to Do This?
+.image https://cdn.shopify.com/s/files/1/1061/1924/products/2_large.png?v=1544200552 _ 350
+
 * Meet the Error Group
 - part of the experimental `golang.org/x/sync/errgroup` package
-- only returns the first error it encounters
+- exposes `Go` and `Wait` functions
 .play errgroup/main.go /^func main/,/}\n}/
+- only returns the first error it encounters
 
 : Another way to deal with the initial problem of referencing a shared variable.
 
-* What if I want all the errors?
-- create a custom version of the error group that can be used like this
+* What if I Still Need All the Errors?
+- we want a different version of the error group that can be used like this
 .code errsgroup/example/main.go /^func main/,/}\n}/
 
-: Look at some code
+* Let's Look at Some Code!
 
-* Are there some ready made alternatives?
-- Some I found useful are available in `github.com/uw-labs/sync` package.
+* Ready to Use Alternatives to Error Group?
+- Some we found useful are available in `github.com/uw-labs/sync` package.
 
 *rungroup*
 
