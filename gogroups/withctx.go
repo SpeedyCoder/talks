@@ -11,6 +11,11 @@ import (
 	"time"
 )
 
+type Context interface {
+	Done() <-chan struct{}
+	// ...
+}
+
 func NewCtx() context.Context {
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
