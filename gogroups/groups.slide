@@ -16,7 +16,14 @@ https://careers.utilitywarehouse.co.uk
 
 : We can just start them and they will do what they are supposed to do, right?
 
-* . . . . . . . . . . . . What Do I Do Now?
+* . . . . . . . . . . . . What Did Just Happen?
+
+* What Does the Go Spec Say?
+
+Program execution begins by initializing the main package and then invoking the function main. When that function invocation returns, the program exits.
+*It*does*not*wait*for*other*(non-main)*goroutines*to*complete.*
+
+.link https://golang.org/ref/spec#Program_execution
 
 * Meet the Wait Group
 - part of the built in `sync` package - essentially just a thread safe counter
