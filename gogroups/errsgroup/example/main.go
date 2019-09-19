@@ -27,7 +27,7 @@ func NewCtx() context.Context {
 func JobWithCtx(ctx context.Context, j int) error {
 	select {
 	case <-ctx.Done(): // HL
-		fmt.Printf("context cancelled job %v terminting\n", j)
+		fmt.Printf("context cancelled job %v terminating\n", j)
 		return nil
 	case <-time.After(time.Second * time.Duration(rand.Intn(3))):
 	}
