@@ -18,13 +18,13 @@ type Context interface {
 
 func NewCtx() context.Context {
 	ctx, cancel := context.WithCancel(context.Background())
-	go func() {
+	go func() { // HL
 		sCh := make(chan os.Signal, 1)
-		signal.Notify(sCh, syscall.SIGINT, syscall.SIGTERM)
+		signal.Notify(sCh, syscall.SIGINT, syscall.SIGTERM) // HL
 		<-sCh
 		fmt.Println("Context cancelled via signal.")
 		cancel()
-	}()
+	}() // HL
 	return ctx
 }
 

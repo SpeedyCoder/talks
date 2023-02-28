@@ -1,101 +1,141 @@
-
-Managing Groups of Goroutines
-18 Sep 2019
+# Introduction to Concurrency
+13:30 8 Mar 2023
 Tags: concurrency, waitgroup, errgroup
+Summary: This is a great document you want to read.
 
 Michal Bock
-Go developer, Utility Warehouse
+Software Engineer, Deliveroo
 michal.bock@gmail.com
+https://michalbock.com
+@michal_bock
 
-http://michalbock.com/goroutines
+## Goroutines
 
-https://careers.utilitywarehouse.co.uk
+- A goroutine has a simple model: it is a function executing concurrently with other goroutines in the same address space.
+- It is lightweight, costing little more than the allocation of stack space. And the stacks start small, so they are cheap, and grow by allocating (and freeing) heap storage as required.
+: They're called goroutines because the existing terms—threads, coroutines, processes, and so on—convey inaccurate connotations.
 
-* Let's Start Some Goroutines!
+- Goroutines are multiplexed onto multiple OS threads so if one should block, such as while waiting for I/O, others continue to run.
+: Their design hides many of the complexities of thread creation and management.
+
+- Prefix a function or method call with the **go** keyword to run the call in a new goroutine. When the call completes, the goroutine exits, silently.
+: (The effect is similar to the Unix shell's & notation for running a command in the background.)
+
+.link https://go.dev/doc/effective_go#goroutines
+
+## Let's Start Some Goroutines!
 .play -edit simple.go
 
 : We can just start them and they will do what they are supposed to do, right?
 
-* What is Going on Here?
+## What is Going on Here?
 .image https://i.pinimg.com/originals/b1/13/6c/b1136c912e6cfa93b3e1463db47bb508.png _ 350
 
-* What Does the Go Spec Say?
+## What Does the Go Spec Say?
 
 Program execution begins by initializing the main package and then invoking the function main. When that function invocation returns, the program exits.
-*It*does*not*wait*for*other*(non-main)*goroutines*to*complete.*
+**It does not wait for other (non-main) goroutines to complete.**
 
 .link https://golang.org/ref/spec#Program_execution
 
-* Meet the Wait Group
-- part of the built in `sync` package - essentially just a thread safe counter
-- *Add* increases the value of the counter by specified amount
-- *Done* decreases the value of the counter by 1
-- *Wait* blocks until the value of the counter is 0
+## Meet the Wait Group
+- Part of the built in **sync** package - essentially just a thread safe counter
+- **Add** increases the value of the counter by specified amount
+- **Done** decreases the value of the counter by 1
+- **Wait** blocks until the value of the counter is 0
+
 .play -edit waitgroup.go /^func main/,/\n}/
 
 : This is not correct as i is updated in place.
 
-* Wait Group Example - Fixed
-- take a single integer argument in the function we are calling
-- the arguments to any function called with *go* are evaluated in the calling goroutine
-- the body is then evaluated in a new goroutine
+## Wait Group Example - Fixed
+- Take a single integer argument in the function we are calling
+- The arguments to any function called with **go** are evaluated in the calling goroutine
+- The body is then evaluated in a new goroutine
+
 .play -edit waitgroup_correct.go /^func main/,/\n}/
 
-* What about Errors?
-- so far our job functions had the following signature
+## What about Errors?
+- So far our job functions had the following signature
+
 .code jobs.go /^type ExampleJob/,/\)/
-- in real life where things are not perfect the signature will more likely look like this
+
+- In real life where things are not perfect the signature will more likely look like this
+
 .code jobs.go /^type RealJob/,/error/
 
-* Job That Can Fail
+## Job That Can Fail
 .code errchan.go /^func Job/,/return nil\n}/
 
-* Use Error Channel to Collect Errors
+## Channels
+- A channel provides a mechanism for concurrently executing functions to communicate by sending and receiving values of a specified element type.
+
+- TODO
+
+## Use Error Channel to Collect Errors
 .play errchan.go /^func main/,/}\n}/
 
-* Handling Termination
-- the standard way to signal to functions that a result is no longer needed or that the program is terminating by cancelling a context
-- the context is usually passed as a first argument of the function
+## Handling Termination
+- The standard way to signal to functions that a result is no longer needed or that the program is terminating by cancelling a context
+- The context is usually passed as a first argument of the function
+
 .code withctx.go /^type Context/,/\n}\n/
 
-* Simple Wrapper for Handling OS Signals
+## Simple Wrapper for Handling OS Signals
 .code withctx.go /^func NewCtx/,/return ctx\n}/
 
-* Job with Context
+## Job with Context
 .code withctx.go /^func JobWithCtx/,/return nil\n}/
 
-* Using Error Channel and Context
+## Using Error Channel and Context
 .play withctx.go /^func main/,/}\n}/
 
 : Show example with cancellation outside of the presentation.
 : This is a lot of slightly awkward code to write every time.
 
-* Is There a Simpler Way to Do This?
+## Is There a Simpler Way to Do This?
 .image https://cdn.shopify.com/s/files/1/1061/1924/products/2_large.png?v=1544200552 _ 350
 
-* Meet the Error Group
+## Meet the Error Group
 - part of the experimental `golang.org/x/sync/errgroup` package
 - exposes `Go` and `Wait` functions
+
 .play errgroup/main.go /^func main/,/}\n}/
+
 - only returns the first error it encounters
 
 : Another way to deal with the initial problem of referencing a shared variable.
 
-* What if I Still Need All the Errors?
+## What if I want to limit the number of goroutines
+- TODO: error group SetLimit
+
+## What if things panic
+- TODO: deliveroo/safe-go
+
+## What if I Still Need All the Errors?
 - we want a different version of the error group that can be used like this
+
 .code errsgroup/example/main.go /^func main/,/}\n}/
 
-* Let's Look at Some Code!
+## Let's Look at Some Code!
 
-* Ready to Use Alternatives to Error Group?
+## Other Alternatives to Error Group
 - Some we found useful are available in `github.com/uw-labs/sync` package.
 
-*rungroup*
+**rungroup**
 
 - cancels the underlying context as soon as the first function started with a call to `Go` terminates
 - useful when managing a continuously running pipeline
 
-*gogroup*
+**gogroup**
 
 - behaves like `rungroup` but `Wait` only blocks until the underlying context is cancelled (this happens when first function terminates)
 - useful in bidirectional gRPC streaming
+
+## Example fetching data from multiple APIs
+- TODO: preallocate space
+
+## Rules of Thumb
+- TODO
+- always use context to ensure clean termination
+- when using channels always communicate in a select with `ctx.Done()`
