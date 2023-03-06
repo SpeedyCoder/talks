@@ -24,7 +24,7 @@ https://michalbock.com
 .link https://go.dev/doc/effective_go#goroutines
 
 ## Let's Start Some Goroutines!
-.play -edit simple.go
+.play -edit simple/simple.go
 
 : We can just start them and they will do what they are supposed to do, right?
 
@@ -44,7 +44,7 @@ Program execution begins by initializing the main package and then invoking the 
 - **Done** decreases the value of the counter by 1
 - **Wait** blocks until the value of the counter is 0
 
-.play -edit waitgroup.go /^func main/,/\n}/
+.play -edit waitgroup/waitgroup.go /^func main/,/\n}/
 
 : This is not correct as i is updated in place.
 
@@ -53,7 +53,7 @@ Program execution begins by initializing the main package and then invoking the 
 - The arguments to any function called with **go** are evaluated in the calling goroutine
 - The body is then evaluated in a new goroutine
 
-.play -edit waitgroup_correct.go /^func main/,/\n}/
+.play -edit waitgroup-correct/waitgroup_correct.go /^func main/,/\n}/
 
 ## What about Errors?
 - So far our job functions had the following signature
@@ -65,7 +65,7 @@ Program execution begins by initializing the main package and then invoking the 
 .code jobs.go /^type RealJob/,/error/
 
 ## Job That Can Fail
-.code errchan.go /^func Job/,/return nil\n}/
+.code errchan/errchan.go /^func Job/,/return nil\n}/
 
 ## Channels
 - A channel provides a mechanism for concurrently executing functions to communicate by sending and receiving values of a specified element type.
@@ -73,22 +73,22 @@ Program execution begins by initializing the main package and then invoking the 
 - TODO
 
 ## Use Error Channel to Collect Errors
-.play errchan.go /^func main/,/}\n}/
+.play errchan/errchan.go /^func main/,/}\n}/
 
 ## Handling Termination
 - The standard way to signal to functions that a result is no longer needed or that the program is terminating by cancelling a context
 - The context is usually passed as a first argument of the function
 
-.code withctx.go /^type Context/,/\n}\n/
+.code withctx/withctx.go /^type Context/,/\n}\n/
 
 ## Simple Wrapper for Handling OS Signals
-.code withctx.go /^func NewCtx/,/return ctx\n}/
+.code withctx/withctx.go /^func NewCtx/,/return ctx\n}/
 
 ## Job with Context
-.code withctx.go /^func JobWithCtx/,/return nil\n}/
+.code withctx/withctx.go /^func JobWithCtx/,/return nil\n}/
 
 ## Using Error Channel and Context
-.play withctx.go /^func main/,/}\n}/
+.play withctx/withctx.go /^func main/,/}\n}/
 
 : Show example with cancellation outside of the presentation.
 : This is a lot of slightly awkward code to write every time.
@@ -97,17 +97,19 @@ Program execution begins by initializing the main package and then invoking the 
 .image https://cdn.shopify.com/s/files/1/1061/1924/products/2_large.png?v=1544200552 _ 350
 
 ## Meet the Error Group
-- part of the experimental `golang.org/x/sync/errgroup` package
-- exposes `Go` and `Wait` functions
+- Part of the experimental `golang.org/x/sync/errgroup` package.
+- Exposes `Go` and `Wait` functions.
 
 .play errgroup/main.go /^func main/,/}\n}/
 
-- only returns the first error it encounters
+- Returns the first error it encounters and cancels the underlying context.
 
 : Another way to deal with the initial problem of referencing a shared variable.
 
 ## What if I want to limit the number of goroutines
-- TODO: error group SetLimit
+: - The `SetLimit` function will only allow the specified number of goroutines to run at the same time.
+
+: .play errgroup-limit/main.go /^func main/,/}\n}/
 
 ## What if things panic
 - TODO: deliveroo/safe-go
