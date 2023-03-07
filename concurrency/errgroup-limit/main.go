@@ -25,10 +25,11 @@ func NewCtx() context.Context {
 }
 
 func JobWithCtx(ctx context.Context, jobID int) error {
+	fmt.Printf("Starting job %v.\n", jobID)
 	select {
 	case <-ctx.Done(): // HL
 		fmt.Printf("context cancelled job %v terminating\n", jobID)
-		return nil
+		return ctx.Err()
 	case <-time.After(time.Second * time.Duration(rand.Intn(3))):
 	}
 	if rand.Intn(12) == jobID {

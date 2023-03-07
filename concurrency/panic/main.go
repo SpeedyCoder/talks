@@ -24,27 +24,36 @@ func NewCtx() context.Context {
 	return ctx
 }
 
+// START1 OMIT
 func JobWithCtx(ctx context.Context, jobID int) error {
 	select {
-	case <-ctx.Done(): // HL
+	case <-ctx.Done():
 		fmt.Printf("context cancelled job %v terminating\n", jobID)
 		return ctx.Err()
 	case <-time.After(time.Second * time.Duration(rand.Intn(3))):
 	}
 	if rand.Intn(12) == jobID {
 		fmt.Printf("Job %v failed.\n", jobID)
-		return fmt.Errorf("job %v failed", jobID)
+		panic(fmt.Errorf("job %v failed", jobID)) // HL
 	}
 
 	fmt.Printf("Job %v done.\n", jobID)
 	return nil
 }
 
+// END1 OMIT
+
+// START2 OMIT
 func main() {
-	eg, ctx := errgroup.WithContext(NewCtx()) // HL
+	defer func() { // HL
+		if err := recover(); err != nil { // HL
+			fmt.Printf("encountered panic: %v\n", err) // HL
+		} // HL
+	}() // HL
+	eg, ctx := errgroup.WithContext(NewCtx())
 
 	for i := 0; i < 10; i++ {
-		jobID := i // HL
+		jobID := i
 		eg.Go(func() error {
 			return JobWithCtx(ctx, jobID)
 		})
@@ -54,3 +63,5 @@ func main() {
 		fmt.Println("Terminated with error:", err)
 	}
 }
+
+// END2 OMIT

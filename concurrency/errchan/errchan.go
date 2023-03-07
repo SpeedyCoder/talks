@@ -30,8 +30,8 @@ func main() {
 	}
 
 	wg.Wait()
-	close(errchan)
-	for err := range errchan {
+	close(errchan)             // HL
+	for err := range errchan { // HL
 		fmt.Println("Encountered error:", err)
 	}
 }

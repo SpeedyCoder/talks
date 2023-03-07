@@ -13,6 +13,7 @@ import (
 
 type Context interface {
 	Done() <-chan struct{}
+	Err() error
 	// ...
 }
 
@@ -29,13 +30,13 @@ func NewCtx() context.Context {
 }
 
 func JobWithCtx(ctx context.Context, jobID int) error {
-	select {
+	select { // HL
 	case <-ctx.Done(): // HL
 		fmt.Printf("context cancelled job %v terminating\n", jobID)
-		return nil
-	case <-time.After(time.Second * time.Duration(rand.Intn(3))):
+		return ctx.Err() // HL
+	case <-time.After(time.Second * time.Duration(rand.Intn(3))): // HL
 		// Simulate some processing
-	}
+	} // HL
 	if rand.Intn(12) == jobID {
 		return fmt.Errorf("job %v failed", jobID)
 	}

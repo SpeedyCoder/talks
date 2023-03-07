@@ -69,8 +69,13 @@ Program execution begins by initializing the main package and then invoking the 
 
 ## Channels
 - A channel provides a mechanism for concurrently executing functions to communicate by sending and receiving values of a specified element type.
+- A new, initialized channel value can be made using the built-in function **make**, which takes the channel **type** and an optional **capacity** as arguments.
+- The capacity, in number of elements, sets the **size of the buffer** in the channel.
+- If the capacity is zero or absent, the channel is unbuffered and communication succeeds only when **both a sender and receiver are ready**. 
+- Otherwise, the channel is buffered and communication succeeds without blocking if the buffer is not full (sends) or not empty (receives). 
+- A channel may be closed with the built-in function **close**.
 
-- TODO
+.link https://go.dev/ref/spec#Channel_types
 
 ## Use Error Channel to Collect Errors
 .play errchan/errchan.go /^func main/,/}\n}/
@@ -80,6 +85,9 @@ Program execution begins by initializing the main package and then invoking the 
 - The context is usually passed as a first argument of the function
 
 .code withctx/withctx.go /^type Context/,/\n}\n/
+
+- When a context is cancelled the channel returned by the **Done** method is closed and so reading from it will return immediately. 
+- The **Err** method will return an error that explains why the context is marked as done. 
 
 ## Simple Wrapper for Handling OS Signals
 .code withctx/withctx.go /^func NewCtx/,/return ctx\n}/
@@ -97,47 +105,71 @@ Program execution begins by initializing the main package and then invoking the 
 .image https://cdn.shopify.com/s/files/1/1061/1924/products/2_large.png?v=1544200552 _ 350
 
 ## Meet the Error Group
-- Part of the experimental `golang.org/x/sync/errgroup` package.
-- Exposes `Go` and `Wait` functions.
+- Part of the experimental **golang.org/x/sync/errgroup** package.
+- Exposes **Go** and **Wait** functions.
 
 .play errgroup/main.go /^func main/,/}\n}/
 
-- Returns the first error it encounters and cancels the underlying context.
+- Returns the first error it encounters and **always** cancels the underlying context.
 
 : Another way to deal with the initial problem of referencing a shared variable.
 
-## What if I want to limit the number of goroutines
-: - The `SetLimit` function will only allow the specified number of goroutines to run at the same time.
+## What if I Want to Limit the Number of Goroutines?
+- The `SetLimit` function will only allow the specified number of goroutines to run at the same time.
 
-: .play errgroup-limit/main.go /^func main/,/}\n}/
+.play errgroup-limit/main.go /^func main/,/}\n}/
 
-## What if things panic
-- TODO: deliveroo/safe-go
+## What Happens when Something Causes a Panic?
+- Amend `JobWithCtx` function to raise a **panic** instead of returning an error.
 
-## What if I Still Need All the Errors?
-- we want a different version of the error group that can be used like this
+.play panic/main.go /START1 OMIT/,/END1 OMIT/
 
-.code errsgroup/example/main.go /^func main/,/}\n}/
+## Let's Add a Recover Statement
+.play panic/main.go /START2 OMIT/,/END2 OMIT/
 
-## Let's Look at Some Code!
+## Why is This not Working?
+_While executing a function **F**, an explicit call to panic or a run-time panic terminates the execution of **F**. Any functions deferred by **F** are then executed as usual. Next, any deferred functions run by **F's** caller are run, and so on **up to any deferred by the top-level function in the executing goroutine**. At that point, the program is terminated and the error condition is reported, including the value of the argument to panic. This termination sequence is called panicking._
+
+.link https://go.dev/ref/spec#Handling_panics
+
+## Meet deliveroo/safe-go
+- This library defines an error group wrapper that catches panics for all goroutines it spawns and converts them to errors.
+
+.play panic-safe/main.go /START OMIT/,/END OMIT/
+
+[//]: # (## What if I Still Need All the Errors?)
+
+[//]: # (- We want a different version of the error group that can be used like this.)
+
+[//]: # ()
+[//]: # (.code errsgroup/example/main.go /^func main/,/}\n}/)
+
+[//]: # ()
+[//]: # (## Let's Look at Some Code!)
 
 ## Other Alternatives to Error Group
 - Some we found useful are available in `github.com/uw-labs/sync` package.
 
 **rungroup**
 
-- cancels the underlying context as soon as the first function started with a call to `Go` terminates
-- useful when managing a continuously running pipeline
+- Cancels the underlying context as soon as the first function started with a call to `Go` terminates.
+- Useful when managing a continuously running pipeline.
 
 **gogroup**
 
-- behaves like `rungroup` but `Wait` only blocks until the underlying context is cancelled (this happens when first function terminates)
-- useful in bidirectional gRPC streaming
+- Behaves like `rungroup` but `Wait` only blocks until the underlying context is cancelled (this happens when first function terminates).
+- Useful in bidirectional gRPC streaming.
 
-## Example fetching data from multiple APIs
-- TODO: preallocate space
+## Example Fetching Data from Multiple APIs
+.code api/main.go /START OMIT/,/END OMIT/
 
-## Rules of Thumb
-- TODO
-- always use context to ensure clean termination
-- when using channels always communicate in a select with `ctx.Done()`
+## A few Rules of Thumb
+1. Always use context to ensure clean early termination.
+2. Use error group over channels where possible.
+3. Always use error group with a context.
+4. When using channels always read or write in a select with `ctx.Done()`.
+
+## Tips for Debugging Concurrent Code
+- Run tests with race detector enabled by setting the `-race` flag.
+- When the program seems to be deadlocked terminate it using `SIGQUIT` (Ctrl + \\) to get stack traces of all active goroutines.
+
