@@ -11,7 +11,7 @@ https://michalbock.com
 
 ## Goroutines
 
-- A goroutine has a simple model: it is a function executing concurrently with other goroutines in the same address space.
+- It is a function executing concurrently with other goroutines in the same address space.
 - It is lightweight, costing little more than the allocation of stack space. And the stacks start small, so they are cheap, and grow by allocating (and freeing) heap storage as required.
 : They're called goroutines because the existing terms—threads, coroutines, processes, and so on—convey inaccurate connotations.
 
@@ -115,12 +115,12 @@ Program execution begins by initializing the main package and then invoking the 
 : Another way to deal with the initial problem of referencing a shared variable.
 
 ## What if I Want to Limit the Number of Goroutines?
-- The `SetLimit` function will only allow the specified number of goroutines to run at the same time.
+- The **SetLimit** function will only allow the specified number of goroutines to run at the same time.
 
 .play errgroup-limit/main.go /^func main/,/}\n}/
 
-## What Happens when Something Causes a Panic?
-- Amend `JobWithCtx` function to raise a **panic** instead of returning an error.
+## What Happens when Something Raises a Panic?
+- Amend **JobWithCtx** function to raise a **panic** instead of returning an error.
 
 .play panic/main.go /START1 OMIT/,/END1 OMIT/
 
