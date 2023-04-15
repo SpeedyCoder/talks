@@ -22,7 +22,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	handler := newProxyHandler(boolManager(false), oldServiceURL, newServiceURL)
+	handler := newProxyHandler(staticManager(ProxyModeUseOld), oldServiceURL, newServiceURL)
 	server := http.Server{
 		Addr:    ":3000",
 		Handler: handler,
@@ -30,8 +30,8 @@ func run() error {
 	return server.ListenAndServe()
 }
 
-type boolManager bool
+type staticManager ProxyMode
 
-func (b boolManager) UseOld(*http.Request) bool {
-	return bool(b)
+func (m staticManager) GetProxyMode(*http.Request) ProxyMode {
+	return ProxyMode(m)
 }

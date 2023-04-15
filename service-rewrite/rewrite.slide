@@ -39,8 +39,8 @@ https://michalbock.com
 * Proxy and the new API are written in Go
 
 **Building the new API** 
-* This a common task that we won't address here.
-* We need to be careful with data writes during the transition to avoid double writes or data race.
+* This a common task that we won't address here
+* We need to be careful with data writes during the transition to avoid double writes or data race
 
 ## Rollout
 1. Introduce HTTP proxy in front of the Old API
@@ -75,9 +75,9 @@ https://michalbock.com
 .code 3-diff-proxy/diff_handler.go /START Requests OMIT/,/END Requests OMIT/
 
 ## Response Recorder
-* The **net/http/httptest** package provides an implementation of the **http.ResponseWriter** interface that captures the response in form of the **ResponseRecorder** struct.
-* This is intended for capturing responses in tests, but we can use this to capture responses from both APIs.
-* We can then forward the response from the old API to the caller and afterwards compare the differences.
+* The **net/http/httptest** package provides an implementation of the **http.ResponseWriter** interface that captures the response in form of the **ResponseRecorder** struct
+* This is intended for capturing responses in tests, but we can use this to capture responses from both APIs
+* We can then forward the response from the old API to the caller and afterwards compare the differences
 
 ## The Diffing Handler
 .code 3-diff-proxy/diff_handler.go /START DiffHandler OMIT/,/END DiffHandler OMIT/
@@ -89,23 +89,23 @@ https://michalbock.com
 .code 3-diff-proxy/diff_handler.go /START diffResponses OMIT/,/END diffResponses OMIT/
 
 ## Checking for Differences
-* We are using **github.com/google/go-cmp/cmp** to check for differences. 
-  * It is intended to only be used in tests, so it's performance is not optimal.  
-  * It may panic if it cannot compare the values.
-  * However, it is still usable in production with panic handling and generous CPU capacity.
-* Alternatively we can handwrite equal methods or generate them using **github.com/awalterschulze/goderive** or a similar tool.
+* We are using **github.com/google/go-cmp/cmp** to check for differences
+  * It is intended to only be used in tests, so it's performance is not optimal
+  * It may panic if it cannot compare the values
+  * However, it is still usable in production with panic handling and generous CPU capacity
+* Alternatively we can handwrite equal methods or generate them using **github.com/awalterschulze/goderive** or a similar tool
 
 ## Production Setup
-* Use metrics in addition to logs to track the number of matching responses and number of responses with differences.
-* Ensure tracing information is propagated.
-* Configure panic handling and improve other error handling.
-* Set timeout for requests going to the new API. 
-* Control which API is used for which route via feature flags.
-* Use **GetBody** of **http.Request** to handle client retries correctly.
+* Use metrics in addition to logs to track the number of matching responses and number of responses with differences
+* Ensure tracing information is propagated
+* Configure panic handling and improve other error handling
+* Set timeout for requests going to the new API
+* Control which API is used for which route via feature flags
+* Use **GetBody** of **http.Request** to handle client retries correctly
 
 ## How did this Approach Work for Us?
-* Reached 100% match across all our read endpoints in production.
-* Completed the rewrite on time and didn't cause an incident.
-* Implemented the new api using gRPC and used the http proxy as a converter.
+* Reached 100% match across all our read endpoints in production
+* Completed the rewrite on time and didn't cause an incident
+* Implemented the new api using gRPC and used the http proxy as a converter
 
 .image images/DiffGraph.png 200 _
