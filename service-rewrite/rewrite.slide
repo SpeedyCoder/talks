@@ -1,0 +1,111 @@
+# How to Rewrite a Service
+19 Apr 2023
+Tags: architecture, service rewrite, strangler pattern, http proxy
+Summary: Rewriting a service is a frequently attempted project at companies of all types and sizes. It's a task that can easily go wrong or take much longer than expected. In this talk I will explain how we used the strangler pattern and tools from the standard library to successfully rewrite a service from Scala to Go.
+
+
+Michal Bock
+Software Engineer, Deliveroo
+michal.bock@gmail.com
+https://michalbock.com
+@michal_bock
+
+## Why rewrite a service?
+
+**Convert it to another language**
+* Improve performance and resource usage 
+* Gain compatibility with newer technologies 
+* Aligning with the rest of the stack and engineer experience
+
+## Goals for the Process
+* Minimise the risk of causing an incident 
+* Ensure changes can be rolled out incrementally 
+* Ensure the old and new API behave the same way
+
+## The Strangler Fig Pattern
+
+.image images/StranglerFig.png 500 _
+
+## The Strangler Fig Pattern
+
+.image images/StranglerDiagram.png 350 _
+
+.link https://learn.microsoft.com/en-us/azure/architecture/patterns/strangler-fig patterns/strangler-fig
+
+## Let's Look at a Concrete Example
+**Assumptions**
+* We are replacing a REST api 
+* Both old and new API use the same database
+* Proxy and the new API are written in Go
+
+**Building the new API** 
+* This a common task that we won't address here.
+* We need to be careful with data writes during the transition to avoid double writes or data race.
+
+## Rollout
+1. Introduce HTTP proxy in front of the Old API
+2. Route requests to both New and Old API
+   * Serving results from the Old API
+   * Alert on differences between the responses from the old and new API
+3. Fix differences and repeat
+4. Once we get 100% match we are ready to deploy the new version
+
+## Let's Build a Simple Proxy
+.image images/StranglerDiagramStep1.png 350 _
+
+## Let's Build a Simple Proxy
+.code 1-simple-proxy/run.go
+
+## Support for Proxying to Two Services
+.image images/StranglerDiagramStep2.png 350 _
+
+## Support for Proxying to Two Services 
+.code 2-double-proxy/proxy.go /START OMIT/,/END OMIT/
+
+## Support for Diffing Responses 
+.code 3-diff-proxy/proxy_mode.go /START OMIT/,/END OMIT/
+
+## Support for Diffing Responses 
+.code 3-diff-proxy/proxy.go /START OMIT/,/END OMIT/
+
+## The Diffing Handler 
+.code 3-diff-proxy/diff_handler.go /START DiffHandler OMIT/,/END DiffHandler OMIT/
+
+## Capturing the Request
+.code 3-diff-proxy/diff_handler.go /START Requests OMIT/,/END Requests OMIT/
+
+## Response Recorder
+* The **net/http/httptest** package provides an implementation of the **http.ResponseWriter** interface that captures the response in form of the **ResponseRecorder** struct.
+* This is intended for capturing responses in tests, but we can use this to capture responses from both APIs.
+* We can then forward the response from the old API to the caller and afterwards compare the differences.
+
+## The Diffing Handler
+.code 3-diff-proxy/diff_handler.go /START DiffHandler OMIT/,/END DiffHandler OMIT/
+
+## Writing the Response to the Caller
+.code 3-diff-proxy/diff_handler.go /START copyResponse OMIT/,/END copyResponse OMIT/
+
+## Checking for Differences
+.code 3-diff-proxy/diff_handler.go /START diffResponses OMIT/,/END diffResponses OMIT/
+
+## Checking for Differences
+* We are using **github.com/google/go-cmp/cmp** to check for differences. 
+  * It is intended to only be used in tests, so it's performance is not optimal.  
+  * It may panic if it cannot compare the values.
+  * However, it is still usable in production with panic handling and generous CPU capacity.
+* Alternatively we can handwrite equal methods or generate them using **github.com/awalterschulze/goderive** or a similar tool.
+
+## Production Setup
+* Use metrics in addition to logs to track the number of matching responses and number of responses with differences.
+* Ensure tracing information is propagated.
+* Configure panic handling and improve other error handling.
+* Set timeout for requests going to the new API. 
+* Control which API is used for which route via feature flags.
+* Use **GetBody** of **http.Request** to handle client retries correctly.
+
+## How did this Approach Work for Us?
+* Reached 100% match across all our read endpoints in production.
+* Completed the rewrite on time and didn't cause an incident.
+* Implemented the new api using gRPC and used the http proxy as a converter.
+
+.image images/DiffGraph.png 200 _
