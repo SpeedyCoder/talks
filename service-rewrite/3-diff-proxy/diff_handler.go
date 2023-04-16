@@ -75,6 +75,9 @@ func copyResponse(recorder *httptest.ResponseRecorder, w http.ResponseWriter) {
 func diffResponses(wg *sync.WaitGroup, oldResponse, newResponse *httptest.ResponseRecorder) {
 	wg.Wait() // Wait for both requests to finish. // HL
 
+	if oldResponse.Code != newResponse.Code { // HL
+		fmt.Printf("Status Code Diff Old: %v New: %v\n", oldResponse.Code, newResponse.Code) // HL
+	} // HL
 	if diff := cmp.Diff(oldResponse.Header(), newResponse.Header()); diff != "" { // HL
 		fmt.Println("Header Diff:", diff) // HL
 	} // HL
@@ -85,7 +88,7 @@ func diffResponses(wg *sync.WaitGroup, oldResponse, newResponse *httptest.Respon
 		fmt.Printf("failed to unmarshal old json: %s\n", err)
 	}
 	if err := json.Unmarshal(newResponse.Body.Bytes(), &newJSON); err != nil {
-		fmt.Printf("failed to unmarshal old json: %s\n", err)
+		fmt.Printf("failed to unmarshal new json: %s\n", err)
 	}
 	if diff := cmp.Diff(oldJSON, newJSON); diff != "" { // HL
 		fmt.Println("Body Diff:", diff) // HL
