@@ -53,6 +53,9 @@ https://michalbock.com
 ## Let's Build a Simple Proxy
 .image images/StranglerDiagramStep1.png 350 _
 
+## HTTP Types from the Standard Library
+.code http.go /START OMIT/,/END OMIT/
+
 ## Let's Build a Simple Proxy
 .code 1-simple-proxy/run.go
 
@@ -102,6 +105,8 @@ https://michalbock.com
 * Set timeout for requests going to the new API
 * Control which API is used for which route via feature flags
 * Use **GetBody** of **http.Request** to handle client retries correctly
+
+.link https://github.com/SpeedyCoder/http-strangler github.com/SpeedyCoder/http-strangler
 
 ## How did this Approach Work for Us?
 * Reached 100% match across all our read endpoints in production
