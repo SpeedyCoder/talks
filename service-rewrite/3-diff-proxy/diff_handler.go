@@ -47,6 +47,7 @@ func getRequestsToForward(req *http.Request) (*http.Request, *http.Request, erro
 	if err != nil {
 		return nil, nil, err
 	}
+
 	oldHandlerReq := req.Clone(req.Context())                   // HL
 	oldHandlerReq.Body = io.NopCloser(bytes.NewReader(payload)) // HL
 
@@ -65,6 +66,7 @@ func copyResponse(recorder *httptest.ResponseRecorder, w http.ResponseWriter) {
 			w.Header().Add(name, val) // HL
 		}
 	}
+
 	w.WriteHeader(recorder.Code)          // HL
 	_, _ = w.Write(recorder.Body.Bytes()) // HL
 }
