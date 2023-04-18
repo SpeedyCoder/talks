@@ -78,9 +78,9 @@ https://michalbock.com
 .code 3-diff-proxy/diff_handler.go /START Requests OMIT/,/END Requests OMIT/
 
 ## Response Recorder
-* The **net/http/httptest** package provides an implementation of the **http.ResponseWriter** interface that captures the response in form of the **ResponseRecorder** struct
-* This is intended for capturing responses in tests, but we can use this to capture responses from both APIs
-* We can then forward the response from the old API to the caller and afterwards compare the differences
+* The **net/http/httptest** package provides **ResponseRecorder** struct that implements the **http.ResponseWriter** interface and captures the response
+* This is intended for capturing responses in tests, but we can use it to capture responses from both APIs
+* We can then forward the response from the old API to the caller and afterwards compare them to check for differences
 
 ## The Diffing Handler
 .code 3-diff-proxy/diff_handler.go /START DiffHandler OMIT/,/END DiffHandler OMIT/
